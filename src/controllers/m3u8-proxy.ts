@@ -20,6 +20,7 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
         headers: {
           Accept: "*/*",
           Referer: "https://rapid-cloud.co/",
+		  Connection: "keep-alive",
         },
       });
 
@@ -40,6 +41,7 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
       headers: {
         Accept: "*/*",
         Referer: "https://rapid-cloud.co/",
+		Connection: "keep-alive",
       },
     });
 
