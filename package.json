@@ -4,9 +4,8 @@
   "description": "GOGOANIME m3u8 proxy to bypass CORS errors",
   "main": "index.js",
   "scripts": {
-    "build": "npx tsc",
     "start": "node src/index.js",
-    "dev": "node src/index.ts"
+    "dev": "node src/index.js"
   },
   "keywords": [],
   "author": "",
