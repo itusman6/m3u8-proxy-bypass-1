@@ -18,7 +18,8 @@ const m3u8Proxy = async (req, res) => {
         encoding: null, // Get the response as a buffer
         headers: {
           Accept: "*/*",
-          Referer: "https://megacloud.club/",
+          Referer: "https://rapid-cloud.co/",
+          Connection: "keep-alive",
         },
       });
 
@@ -38,7 +39,8 @@ const m3u8Proxy = async (req, res) => {
       uri: url,
       headers: {
         Accept: "*/*",
-        Referer: "https://megacloud.club/",
+        Referer: "https://rapid-cloud.co/",
+        Connection: "keep-alive",
       },
     });
 
