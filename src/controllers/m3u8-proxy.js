@@ -1,4 +1,3 @@
-const express = require("express");
 const cloudscraper = require("cloudscraper");
 const { PassThrough } = require("stream");
 
@@ -8,46 +7,29 @@ const m3u8Proxy = async (req, res) => {
   try {
     const url = req.query.url;
 
-    if (!url) return res.status(400).json("url is required");
-
-    console.log(`Fetching URL: ${url}`); // Log the URL being fetched
-
-// ✅ Middleware to Handle CORS & Preflight Requests
-router.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");  // Allow all origins
-  res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Range");
-  res.header("Access-Control-Expose-Headers", "Content-Length, Content-Range");
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204); // ✅ Respond to preflight requests
-  }
-
-  next();
-});
-
-// ✅ Proxy Route
-app.get("/m3u8-proxy", async (req, res) => {
-  try {
-    const url = req.query.url;
     if (!url) return res.status(400).json({ error: "URL is required" });
 
     console.log(`🔗 Fetching URL: ${url}`);
 
+    // ✅ Add CORS Headers to Prevent "strict-origin-when-cross-origin" Errors
+    res.set({
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Range",
+      "Access-Control-Expose-Headers": "Content-Length, Content-Range",
+    });
+
     const headers = {
       "Accept": "*/*",
-      "Referer": "https://rapid-cloud.co/",  // ✅ Helps with strict-origin-when-cross-origin
-      "Origin": "https://rapid-cloud.co",   // ✅ Some sites require a valid origin
+      "Referer": "https://rapid-cloud.co/", // ✅ Fixes strict-origin issues
+      "Origin": "https://rapid-cloud.co", // ✅ Some servers need a valid origin
       "Connection": "keep-alive",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", // ✅ Mimic a real browser
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)", // ✅ Mimics a real browser
     };
 
-    if (allowedExtensions.some(ext => url.endsWith(ext))) {
-      const response = await cloudscraper.get({
-        uri: url,
-        encoding: null, // Buffer response
-        headers,
-      });
+    if (allowedExtensions.some((ext) => url.endsWith(ext))) {
+      // ✅ Bypass Cloudflare for .ts and other allowed files
+      const response = await cloudscraper.get({ uri: url, encoding: null, headers });
 
       res.set({
         "Content-Type": "application/octet-stream",
@@ -59,8 +41,8 @@ app.get("/m3u8-proxy", async (req, res) => {
       return bufferStream.pipe(res);
     }
 
+    // ✅ Fetch and Modify .m3u8 Content
     const response = await cloudscraper.get({ uri: url, headers });
-
     console.log("✅ Response received from Cloudscraper");
 
     const modifiedContent = response
@@ -83,6 +65,6 @@ app.get("/m3u8-proxy", async (req, res) => {
     console.error("❌ Error fetching content:", error.message);
     return res.status(500).json({ error: "Failed to fetch the content", details: error.message });
   }
-});
+};
 
 module.exports = { m3u8Proxy };
