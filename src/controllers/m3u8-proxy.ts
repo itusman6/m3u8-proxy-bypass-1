@@ -12,6 +12,14 @@ export const m3u8Proxy = async (req: Request, res: Response) => {
 
     console.log(`Fetching URL: ${url}`); // Log the URL being fetched
 
+    // ✅ Add CORS Headers
+    res.set({
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Range",
+      "Access-Control-Expose-Headers": "Content-Length, Content-Range",
+    });	  
+
     if (allowedExtensions.some(ext => url.endsWith(ext))) {
       // Use cloudscraper to bypass Cloudflare for .ts files and other allowed extensions
       const response = await cloudscraper.get({
