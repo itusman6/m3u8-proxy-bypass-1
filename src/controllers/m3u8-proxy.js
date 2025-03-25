@@ -1,29 +1,35 @@
+const express = require("express");
 const cloudscraper = require("cloudscraper");
 const { PassThrough } = require("stream");
 
+const app = express();
 const allowedExtensions = ['.ts', '.png', '.jpg', '.webp', '.ico', '.html', '.js', '.css', '.txt'];
 
-const m3u8Proxy = async (req, res) => {
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Range");
+  res.header("Access-Control-Expose-Headers", "Content-Length, Content-Range");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
+
+app.get("/m3u8-proxy", async (req, res) => {
   try {
     const url = req.query.url;
 
-    if (!url) return res.status(400).json("url is required");
+    if (!url) return res.status(400).json({ error: "URL is required" });
 
-    console.log(`Fetching URL: ${url}`); // Log the URL being fetched
-
-        // ✅ Add CORS Headers
-    res.set({
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept, Range",
-      "Access-Control-Expose-Headers": "Content-Length, Content-Range",
-    });
+    console.log(`Fetching URL: ${url}`);
 
     if (allowedExtensions.some(ext => url.endsWith(ext))) {
-      // Use cloudscraper to bypass Cloudflare for .ts files and other allowed extensions
       const response = await cloudscraper.get({
         uri: url,
-        encoding: null, // Get the response as a buffer
+        encoding: null,
         headers: {
           Accept: "*/*",
           Referer: "https://rapid-cloud.co/",
@@ -31,7 +37,6 @@ const m3u8Proxy = async (req, res) => {
         },
       });
 
-      // Set headers and pipe the response
       res.set({
         "Content-Type": "application/octet-stream",
         "Cache-Control": "public, max-age=3600",
@@ -42,7 +47,6 @@ const m3u8Proxy = async (req, res) => {
       return bufferStream.pipe(res);
     }
 
-    // Use cloudscraper to bypass Cloudflare for .m3u8 files
     const response = await cloudscraper.get({
       uri: url,
       headers: {
@@ -52,18 +56,12 @@ const m3u8Proxy = async (req, res) => {
       },
     });
 
-    console.log("Response received from Cloudscraper:", response); // Log the response
+    console.log("Response received from Cloudscraper:", response);
 
-    const originalContent = response;
-    const modifiedContent = originalContent.split("\n").map((line) => {
+    const modifiedContent = response.split("\n").map((line) => {
       if (line.endsWith('.m3u8') || line.endsWith('.ts')) {
         return `m3u8-proxy?url=${url.replace(/[^/]+$/, "")}${line}`;
       }
-
-      if (allowedExtensions.some(ext => line.endsWith(ext))) {
-        return `m3u8-proxy?url=${line}`;
-      }
-
       return line;
     }).join("\n");
 
@@ -74,10 +72,9 @@ const m3u8Proxy = async (req, res) => {
 
     return res.status(200).send(modifiedContent);
   } catch (error) {
-    console.error("Error fetching content:", error.message); // Log the full error
-    console.error("Error stack:", error.stack); // Log the error stack for debugging
+    console.error("Error fetching content:", error.message);
     return res.status(500).json({ error: "Failed to fetch the content", details: error.message });
   }
-};
+});
 
-module.exports = { m3u8Proxy };
+app.listen(3000, () => console.log("Proxy running on port 3000"));
