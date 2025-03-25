@@ -77,5 +77,3 @@ router.get("/m3u8-proxy", async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to fetch the content", details: error.message });
   }
 });
-
-export default router;
