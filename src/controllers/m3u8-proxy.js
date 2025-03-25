@@ -2,12 +2,18 @@ const express = require("express");
 const cloudscraper = require("cloudscraper");
 const { PassThrough } = require("stream");
 
-const app = express();
-const PORT = 3000;
 const allowedExtensions = [".ts", ".png", ".jpg", ".webp", ".ico", ".html", ".js", ".css", ".txt"];
 
+const m3u8Proxy = async (req, res) => {
+  try {
+    const url = req.query.url;
+
+    if (!url) return res.status(400).json("url is required");
+
+    console.log(`Fetching URL: ${url}`); // Log the URL being fetched
+
 // ✅ Middleware to Handle CORS & Preflight Requests
-app.use((req, res, next) => {
+router.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");  // Allow all origins
   res.header("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Range");
@@ -79,5 +85,4 @@ app.get("/m3u8-proxy", async (req, res) => {
   }
 });
 
-// ✅ Start Server
-app.listen(PORT, () => console.log(`🚀 Proxy running on port ${PORT}`));
+module.exports = { m3u8Proxy };
